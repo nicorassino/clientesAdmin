@@ -52,7 +52,7 @@ $clientes = $stmt->fetchAll();
                 <td>
                     <a href="cliente_pagos.php?id_cliente=<?php echo $cliente['id']; ?>" class="btn btn-sm btn-success" title="Ver Pagos"><i class="bi bi-currency-dollar"></i></a>
                     <a href="cliente_form.php?id=<?php echo $cliente['id']; ?>" class="btn btn-sm btn-warning" title="Editar"><i class="bi bi-pencil"></i></a>
-                    <a href="#" onclick="event.stopPropagation(); confirmarBorrado('cliente_acciones.php?accion=borrar&id=<?php echo $cliente['id']; ?>')" class="btn btn-sm btn-danger" title="Borrar"><i class="bi bi-trash"></i></a>
+                    <a href="#" onclick="event.stopPropagation(); confirmarAccion('cliente_acciones.php?accion=borrar&id=<?php echo $cliente['id']; ?>', '¿Estás seguro de que deseas eliminar este cliente? Se borrarán también todos sus pagos asociados.')" class="btn btn-sm btn-danger" title="Borrar"><i class="bi bi-trash"></i></a>
                 </td>
             </tr>
             <?php endforeach; ?>
