@@ -1,0 +1,24 @@
+Funcionamiento de la libreria:
+1-El archivo obtenerToken genera el archivo TRA.xml, luego lo transforma en TRA.cms y lo envía a afip.
+2-Afip devuelve el TA.xml(token access) que dura 12hs
+3-Cada vez que ejecuto una consulta o emision de comprobante verifico el TA llamando al verificarTA
+Si no esta creado o esta vencido verificarTA llama a obtenerToken
+4-emite el comprobante o consulta
+
+Instalación de libreria para emitir comprobantes:
+1-al archivo obtenerToken cargarle cuit ptovta y seleccionar una de las dos url segun homologacion o produccion en linea 48
+2-al archivo emitirComp cargarle las  variables de arriba y seleccionar la url segun homolog o produc en linea 29
+y cargar el array datos segun el comprobante a emitir
+3- para consultarComp se cargan las 3 variables de arriba y se selecciona modo en la linea 21
+
+Para emitir o consultar un comprobante directamente llamamos consultarComp o emitirComp que llamaran al obtenerToken si es necesario
+
+URLS PRODUCCION U HOMOLOGACIÓN
+EN obtenerToken:  https://wsaa.afip.gov.ar/ws/services/LoginCms?WSDL --->PRODUCCION
+                  https://wsaahomo.afip.gov.ar/ws/services/LoginCms?WSDL --->HOMOLOGACIÓN
+EN consultarComp o emitirComp:
+                 https://wswhomo.afip.gov.ar/wsfev1/service.asmx -->HOMOLOGACIÓN
+                 https://servicios1.afip.gov.ar/wsfev1/service.asmx -->PRODUCCION                 
+
+***Tener en cuenta que si cambiamos de cuit o de homologacion a produccion hay que
+ ejecutar el obtenerToken con los certificados nuevos para que genere el TokenAccess***
