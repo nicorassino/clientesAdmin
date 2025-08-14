@@ -1,5 +1,7 @@
 {
     "name": "vendor/admin",
     "description": "mailRecordatorio",
-    "require": {}
+    "require": {
+        "phpmailer/phpmailer": "^6.10"
+    }
 }
