@@ -6,8 +6,8 @@ date_default_timezone_set('UTC');
 // === Configuración ===
 $CUIT = '20355729428'; // CUIT emisor
 $SERVICE = 'wsfe';     // Servicio 
-$CERT = __DIR__ . '/cert/certhom.crt';
-$PRIVATEKEY = __DIR__ . '/cert/ClavePrivadaRassino.key';
+$CERT = __DIR__ . '/cert/produccionNico/rassinoNicolas.crt';
+$PRIVATEKEY = __DIR__ . '/cert/produccionNico/clave_privada_sin_pass.key';
 $TRA = __DIR__ . '/TRA.xml';
 $TA = __DIR__ . '/TA.xml';
 
@@ -45,7 +45,7 @@ $cms_base64 = base64_encode($cms);
 
 // === Enviar CMS a WSAA Homologación === 
 //cambiar la url de abajo para produccion por ésta: https://wsaa.afip.gov.ar/ws/services/LoginCms?WSDL
-$client = new SoapClient("https://wsaahomo.afip.gov.ar/ws/services/LoginCms?WSDL", [
+$client = new SoapClient("https://wsaa.afip.gov.ar/ws/services/LoginCms?WSDL", [
     'trace' => 1,
     'exceptions' => 1,
 ]);

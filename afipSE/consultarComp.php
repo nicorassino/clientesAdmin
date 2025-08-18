@@ -6,9 +6,9 @@ if (!verificar_o_generar_TA()) {
 }
 
 
-$CUIT      = '30535380593';
-$PTO_VTA   = 5;
-$TIPO_CMP  = 15; // Recibo C
+$CUIT      = '20139646674';
+$PTO_VTA   = 4;
+$TIPO_CMP  = 11; // Recibo C
 
 // Cargar TA.xml
 $ta = simplexml_load_file('TA.xml');

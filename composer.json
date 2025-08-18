@@ -2,6 +2,8 @@
     "name": "vendor/admin",
     "description": "mailRecordatorio",
     "require": {
-        "phpmailer/phpmailer": "^6.10"
+        "phpmailer/phpmailer": "^6.10",
+        "dompdf/dompdf": "^3.1",
+        "endroid/qr-code": "^4.8"
     }
 }

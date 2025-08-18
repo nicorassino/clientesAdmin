@@ -4,14 +4,13 @@ require_once 'verificarTA.php';
 if (!verificar_o_generar_TA()) {
     exit("❌ No se pudo generar TA.xml");
 }
-
 $CUIT       = '20355729428';
 $PTO_VTA    = 4;
-$TIPO_CMP   = 12;               // 15 = Recibo C, 12 = Nota de Crédito C
+$TIPO_CMP   = $_GET['tipoComp'] ?? 'No especificado';    // 15 = Recibo C, 12 = Nota de Crédito C 11 = Factura C
 $CONCEPTO   = 2;                // Servicios
-$DOC_TIPO   = 96;               // DNI
-$DOC_NRO    = 13964667;
-$IMPORTE    = 10.00;
+$DOC_TIPO   = 80;               // DNI con 96,cuit con 80
+$DOC_NRO    = $_GET['cuit'] ?? 'No especificado';
+$IMPORTE    = $_GET['importe'] ?? 0.00;
 $MONEDA_ID  = 'PES';
 $COTIZACION = 1.000;
 $FECHA      = date('Ymd');
@@ -26,8 +25,8 @@ $wsdl = __DIR__ . '/wsdl/WSFEv1.wsdl';
 try {
     $client = new SoapClient($wsdl, [
         'soap_version' => SOAP_1_2,
-        'location' => "https://wswhomo.afip.gov.ar/wsfev1/service.asmx",
-        //'location' => "https://servicios1.afip.gov.ar/wsfev1/service.asmx", // Producción
+        //'location' => "https://wswhomo.afip.gov.ar/wsfev1/service.asmx",
+        'location' => "https://servicios1.afip.gov.ar/wsfev1/service.asmx", // Producción
         'trace' => 1,
         'exceptions' => true,
         'stream_context' => stream_context_create([
@@ -112,7 +111,6 @@ $datos = [
         ]
     ]
 ];
-
 // Enviar solicitud
 try {
     $respuesta = $client->FECAESolicitar([
@@ -126,8 +124,9 @@ try {
 
     $detalle = $respuesta->FECAESolicitarResult->FeDetResp->FECAEDetResponse;
 
-    echo "\n✅ CAE otorgado: " . $detalle->CAE . "\n";
-    echo "📅 Vencimiento CAE: " . $detalle->CAEFchVto . "\n";
+   // echo "\n✅ CAE otorgado: " . $detalle->CAE . "\n";
+    //echo "📅 Vencimiento CAE: " . $detalle->CAEFchVto . "\n";
+    var_dump($detalle);
 
 } catch (SoapFault $e) {
     echo "❌ Error al emitir comprobante: " . $e->getMessage() . PHP_EOL;

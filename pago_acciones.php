@@ -227,27 +227,52 @@ $monto_pagado = (isset($_POST['monto_pagado']) && is_numeric($_POST['monto_pagad
         redirect_to_client($id_cliente);
         break;
         
-    case 'facturar':
+   case 'facturar':
         $id_pago = $_GET['id_pago'];
         
-        $stmt = $pdo->prepare("SELECT p.id_cliente, p.mes, p.anio, p.monto_pagado, c.cuit, c.servicios FROM pagos p JOIN clientes c ON p.id_cliente = c.id WHERE p.id = ?");
+        // 1. Obtener los datos necesarios para la factura desde la base de datos
+        $stmt = $pdo->prepare("
+            SELECT p.monto_pagado, c.cuit 
+            FROM pagos p 
+            JOIN clientes c ON p.id_cliente = c.id 
+            WHERE p.id = ?
+        ");
         $stmt->execute([$id_pago]);
         $datos_factura = $stmt->fetch();
 
         if ($datos_factura) {
-            $_SESSION['factura_cuit'] = $datos_factura['cuit'];
-            $_SESSION['factura_servicio'] = $datos_factura['servicios'];
-            $_SESSION['factura_mes'] = $datos_factura['mes'];
-            $_SESSION['factura_anio'] = $datos_factura['anio'];
-            $_SESSION['factura_monto'] = $datos_factura['monto_pagado'];
+            // 2. Marcar el pago como 'Facturado' en nuestra base de datos
             $stmt_update = $pdo->prepare("UPDATE pagos SET facturado = 1 WHERE id = ?");
             $stmt_update->execute([$id_pago]);
-            set_notification("Datos para factura generados y pago marcado como 'Facturado'.");
-            redirect_to_client($datos_factura['id_cliente']);
+            
+            // 3. Preparar las variables para la URL
+            $tipoComp = "11"; // Factura C
+            $cuit_cliente = $datos_factura['cuit'];
+            $importe_pago = $datos_factura['monto_pagado'];
+
+            // 4. Construir la URL de destino con los parámetros GET
+            // urlencode() asegura que los datos se pasen correctamente en la URL
+            $url_destino = sprintf(
+                "afipSE/emitirComp.php?tipoComp=%s&cuit=%s&importe=%s",
+                urlencode($tipoComp),
+                urlencode($cuit_cliente),
+                urlencode($importe_pago)
+            );
+
+            // 5. Redirigir al usuario al script de facturación
+            header("Location: " . $url_destino);
+            exit(); // Terminar la ejecución del script aquí
+
         } else {
-            set_notification('Error al obtener los datos para la factura.', 'danger');
-            header('Location: index.php');
-            exit();
+            // Si no se encuentra el pago, redirigir con un error
+            set_notification('Error: No se pudo encontrar el pago para facturar.', 'danger');
+            // Intentamos redirigir al cliente si tenemos el ID, sino al index
+            if (isset($_GET['id_cliente'])) {
+                redirect_to_client($_GET['id_cliente']);
+            } else {
+                header('Location: index.php');
+                exit();
+            }
         }
         break;
 

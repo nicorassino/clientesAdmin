@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1.0">
+    <header>
+        <source>CN=wsaa, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+        <destination>SERIALNUMBER=CUIT 20355729428, CN=rassino</destination>
+        <uniqueId>1309911963</uniqueId>
+        <generationTime>2025-08-18T16:07:23.193-03:00</generationTime>
+        <expirationTime>2025-08-19T04:07:23.193-03:00</expirationTime>
+    </header>
+    <credentials>
+        <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgc3JjPSJDTj13c2FhLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBkc3Q9IkNOPXdzZmUsIE89QUZJUCwgQz1BUiIgdW5pcXVlX2lkPSIzODY4Mzg5MTkiIGdlbl90aW1lPSIxNzU1NTQzOTgzIiBleHBfdGltZT0iMTc1NTU4NzI0MyIvPgogICAgPG9wZXJhdGlvbiB0eXBlPSJsb2dpbiIgdmFsdWU9ImdyYW50ZWQiPgogICAgICAgIDxsb2dpbiBlbnRpdHk9IjMzNjkzNDUwMjM5IiBzZXJ2aWNlPSJ3c2ZlIiB1aWQ9IlNFUklBTE5VTUJFUj1DVUlUIDIwMzU1NzI5NDI4LCBDTj1yYXNzaW5vIiBhdXRobWV0aG9kPSJjbXMiIHJlZ21ldGhvZD0iMjIiPgogICAgICAgICAgICA8cmVsYXRpb25zPgogICAgICAgICAgICAgICAgPHJlbGF0aW9uIGtleT0iMjAzNTU3Mjk0MjgiIHJlbHR5cGU9IjQiLz4KICAgICAgICAgICAgPC9yZWxhdGlvbnM+CiAgICAgICAgPC9sb2dpbj4KICAgIDwvb3BlcmF0aW9uPgo8L3Nzbz4K</token>
+        <sign>DJSmiMrksJ+Z+CdlyrrT+gL2MrycDg+2b/OEFBjIFJeBIhnH5UfZVj6y5/J7AQQfHF0zmK9xwqD7Zj+hwWrcSCv2ck8HzVlJe2K1wotwZ2a5BOOZOJ2Xxi0iSX+hj4JvtbIbyJ/CtSO9uwoqGqbgLzkhBwCKVBuCZVCf8emhX08=</sign>
+    </credentials>
+</loginTicketResponse>
