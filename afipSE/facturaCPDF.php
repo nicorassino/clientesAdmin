@@ -3,72 +3,66 @@ require '../vendor/autoload.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
-
-// QR: Endroid
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
 
-// ----------------- Datos de ejemplo (reemplazá con los tuyos) -----------------
-$factura = [
-    "tipo" => "Factura C",
-    "letra" => "C",
-    "punto_venta" => "4",            // para mostrar lo paddeamos; para QR lo pasamos a int
-    "nro_comprobante" => "508",      // idem
-    "fecha_emision" => "2025-08-04", // AFIP espera YYYY-MM-DD en el QR
-    "fecha_vto_pago" => "2025-08-11",
-    "periodo_desde" => "2025-08-01",
-    "periodo_hasta" => "2025-08-31",
-    "cae" => "75318900218724",
-    "vto_cae" => "2025-08-14",
-    "emisor" => [
-        "nombre" => "RASSINO NICOLAS IGNACIO",
-        "cuit" => "20355729428",
-        "domicilio" => "Los Ceibos 84 - Mendiolaza, Córdoba",
-        "condicion_iva" => "Responsable Monotributo",
-    ],
-    "receptor" => [
-        "nombre" => "INSTITUTO CATOLICO SUPERIOR",
-        "cuit" => "30677610782",
-        "domicilio" => "Avenida Velez Sarfield 539 - Barrio Centro Sur, Córdoba",
-        "condicion_iva" => "IVA Sujeto Exento",
-    ],
-    "items" => [
-        ["desc" => "soporte sistema terciario", "cant" => 1, "precio" => 144383.28],
-    ],
-];
+// --- Validar si se recibieron los datos por POST ---
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['factura_data'])) {
+    die("Error: Acceso no válido o datos de factura no recibidos.");
+}
 
-// ----------------- Calcular totales + tabla -----------------
+// Decodificar los datos JSON enviados desde emitirComp.php
+$factura = json_decode($_POST['factura_data'], true);
+
+if (json_last_error() !== JSON_ERROR_NONE) {
+    die("Error: Los datos de la factura están mal formados.");
+}
+
+
+// ----------------- Calcular totales + tabla HTML -----------------
 $total = 0.0;
 $itemsHtml = "";
 foreach ($factura["items"] as $item) {
     $subtotal = $item["cant"] * $item["precio"];
     $total += $subtotal;
+    // Formatear números para la vista
+    $cantidadF = number_format($item['cant'], 2, ',', '.');
+    $precioF = number_format($item['precio'], 2, ',', '.');
+    $subtotalF = number_format($subtotal, 2, ',', '.');
+    
     $itemsHtml .= "
     <tr>
-        <td>{$item['desc']}</td>
-        <td class='right'>".number_format($item['cant'],2,',','.')."</td>
-        <td class='right'>".number_format($item['precio'],2,',','.')."</td>
-        <td class='right'>".number_format($subtotal,2,',','.')."</td>
+        <td>" . htmlspecialchars($item['desc']) . "</td>
+        <td class='right'>{$cantidadF}</td>
+        <td class='right'>{$precioF}</td>
+        <td class='right'>{$subtotalF}</td>
     </tr>";
 }
 
-// ----------------- QR AFIP (local, sin internet) -----------------
-$importeQr = number_format($total, 2, '.', ''); // punto decimal
+// ----------------- Preparar datos para el QR AFIP -----------------
+// El tipo de comprobante AFIP (código numérico)
+$tipoCmpCodigo = 11; // 11=Factura C, 15=Recibo C, 12=NC C
+if (strpos(strtolower($factura['tipo']), 'recibo') !== false) {
+    $tipoCmpCodigo = 15;
+} elseif (strpos(strtolower($factura['tipo']), 'nota de crédito') !== false) {
+    $tipoCmpCodigo = 12;
+}
+
 $datos_qr = [
     "ver"        => 1,
-    "fecha"      => $factura["fecha_emision"],          // YYYY-MM-DD
+    "fecha"      => date('Y-m-d', strtotime($factura["fecha_emision"])), // Formato YYYY-MM-DD
     "cuit"       => (int)$factura["emisor"]["cuit"],
     "ptoVta"     => (int)$factura["punto_venta"],
-    "tipoCmp"    => 11,                                  // 11 = Factura C
+    "tipoCmp"    => $tipoCmpCodigo,
     "nroCmp"     => (int)$factura["nro_comprobante"],
-    "importe"    => (float)$importeQr,
+    "importe"    => (float)number_format($total, 2, '.', ''), // Sin separador de miles
     "moneda"     => "PES",
     "ctz"        => 1,
-    "tipoDocRec" => 80,                                  // 80 = CUIT
+    "tipoDocRec" => 80, // CUIT
     "nroDocRec"  => (int)$factura["receptor"]["cuit"],
-    "tipoCodAut" => "E",
+    "tipoCodAut" => "E", // "E" para CAE
     "codAut"     => (int)$factura["cae"],
 ];
 $qrPayload = "https://www.afip.gob.ar/fe/qr/?p=" . base64_encode(json_encode($datos_qr));
@@ -83,10 +77,26 @@ $qr = QrCode::create($qrPayload)
 $qrResult = $writer->write($qr);
 $qrDataUri = $qrResult->getDataUri();
 
-// ----------------- HTML -----------------
-$puntoVenta    = str_pad($factura["punto_venta"], 5, "0", STR_PAD_LEFT);
-$nroComprobante= str_pad($factura["nro_comprobante"], 8, "0", STR_PAD_LEFT);
+// ----------------- Preparar datos para el HTML -----------------
+$puntoVenta     = str_pad($factura["punto_venta"], 5, "0", STR_PAD_LEFT);
+$nroComprobante = str_pad($factura["nro_comprobante"], 8, "0", STR_PAD_LEFT);
+$fechaEmisionF  = date('d/m/Y', strtotime($factura["fecha_emision"]));
+$vtoCaeF        = date('d/m/Y', strtotime($factura["vto_cae"]));
+$periodoDesdeF  = date('d/m/Y', strtotime($factura["periodo_desde"]));
+$periodoHastaF  = date('d/m/Y', strtotime($factura["periodo_hasta"]));
+$vtoPagoF       = date('d/m/Y', strtotime($factura["fecha_vto_pago"]));
 
+// --- Título dinámico ---
+$tipoComprobanteTitulo = "FACTURA";
+if (strpos(strtolower($factura['tipo']), 'recibo') !== false) {
+    $tipoComprobanteTitulo = "RECIBO";
+} elseif (strpos(strtolower($factura['tipo']), 'nota de crédito') !== false) {
+    $tipoComprobanteTitulo = "NOTA DE CRÉDITO";
+}
+$codigoComprobanteTitulo = "COD. " . str_pad($tipoCmpCodigo, 3, "0", STR_PAD_LEFT);
+
+
+// ----------------- HTML Dinámico -----------------
 $html = '
 <style>
     body { font-family: DejaVu Sans, sans-serif; font-size: 12px; }
@@ -103,24 +113,18 @@ $html = '
     .footer { margin-top: 12px; font-size: 10px; }
     .top-meta { margin: 8px 0 10px 0; }
     .qr-wrap { margin-top: 8px; text-align: right; }
-    .footer-fixed {
-    position: fixed;
-    bottom: 20px; /* margen inferior */
-    left: 0;
-    width: 100%;
-}
-
+    .footer-fixed { position: fixed; bottom: 20px; left: 0; width: 100%; }
 </style>
 
-<div class="titulo">FACTURA '.$factura["letra"].' - COD. 011</div>
+<div class="titulo">'.$tipoComprobanteTitulo.' '.$factura["letra"].' - '.$codigoComprobanteTitulo.'</div>
 <div class="subtitulo">ORIGINAL</div>
 
 <div class="grid top-meta">
   <div class="row">
     <div class="cell cell-half">
-      <strong>Fecha de Emisión:</strong> '.$factura["fecha_emision"].'<br>
-      <strong>Período:</strong> '.$factura["periodo_desde"].' al '.$factura["periodo_hasta"].'<br>
-      <strong>Vto. Pago:</strong> '.$factura["fecha_vto_pago"].'
+      <strong>Fecha de Emisión:</strong> '.$fechaEmisionF.'<br>
+      <strong>Período:</strong> '.$periodoDesdeF.' al '.$periodoHastaF.'<br>
+      <strong>Vto. Pago:</strong> '.$vtoPagoF.'
     </div>
     <div class="cell cell-half">
       <strong>Pto. Venta:</strong> '.$puntoVenta.' &nbsp;&nbsp;
@@ -133,43 +137,36 @@ $html = '
   <div class="row">
     <div class="cell cell-half">
       <strong>Emisor</strong><br>
-      '.$factura["emisor"]["nombre"].'<br>
+      '.htmlspecialchars($factura["emisor"]["nombre"]).'<br>
       CUIT: '.$factura["emisor"]["cuit"].'<br>
-      '.$factura["emisor"]["domicilio"].'<br>
-      Condición frente al IVA: '.$factura["emisor"]["condicion_iva"].'
+      '.htmlspecialchars($factura["emisor"]["domicilio"]).'<br>
+      Condición frente al IVA: '.htmlspecialchars($factura["emisor"]["condicion_iva"]).'
     </div>
     <div class="cell cell-half">
       <strong>Cliente</strong><br>
-      '.$factura["receptor"]["nombre"].'<br>
+      '.htmlspecialchars($factura["receptor"]["nombre"]).'<br>
       CUIT: '.$factura["receptor"]["cuit"].'<br>
-      '.$factura["receptor"]["domicilio"].'<br>
-      Condición frente al IVA: '.$factura["receptor"]["condicion_iva"].'
+      Condición frente al IVA: '.htmlspecialchars($factura["receptor"]["condicion_iva"]).'
     </div>
   </div>
 </div>
 
 <table class="items">
   <thead>
-    <tr>
-      <th>Descripción</th>
-      <th>Cantidad</th>
-      <th>Precio Unit.</th>
-      <th>Subtotal</th>
-    </tr>
+    <tr><th>Descripción</th><th>Cantidad</th><th>Precio Unit.</th><th>Subtotal</th></tr>
   </thead>
   <tbody>'.$itemsHtml.'</tbody>
 </table>
 
 <div class="footer-fixed">
   <div class="total">Total: $'.number_format($total,2,',','.').'</div>
-
   <div class="grid">
     <div class="row">
       <div class="cell cell-half">
         <div class="footer">
           <strong>CAE N°:</strong> '.$factura["cae"].' &nbsp;&nbsp;
-          <strong>Vto. CAE:</strong> '.$factura["vto_cae"].'<br>
-          Comprobante Autorizado. Esta agencia no se responsabiliza por los datos ingresados en el detalle de la operación.
+          <strong>Vto. CAE:</strong> '.$vtoCaeF.'<br>
+          Comprobante Autorizado.
         </div>
       </div>
       <div class="cell cell-half">
@@ -180,15 +177,13 @@ $html = '
     </div>
   </div>
 </div>
-
 ';
 
 // ----------------- Dompdf -----------------
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
-$options->set('isRemoteEnabled', true); // no dependemos de remoto, pero lo dejamos
+$options->set('isRemoteEnabled', true);
 $dompdf = new Dompdf($options);
-
 $dompdf->loadHtml($html);
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();

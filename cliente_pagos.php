@@ -178,7 +178,7 @@ foreach($pagos_cronologicos as $pago_cron) {
                 </td>
                 <td>
                      <a href="pago_acciones.php?accion=recordatorio&id_pago=<?php echo $pago['id']; ?>" class="btn btn-sm btn-info" title="Enviar Recordatorio"><i class="bi bi-envelope"></i></a>
-                     <a href="pago_acciones.php?accion=facturar&id_pago=<?php echo $pago['id']; ?>" class="btn btn-sm btn-primary" title="Generar Factura"><i class="bi bi-receipt"></i></a>
+                     <a href="pago_acciones.php?accion=facturar&id_pago=<?php echo $pago['id']; ?>" class="btn btn-sm btn-primary" target="_blank" title="Generar Factura"><i class="bi bi-receipt"></i></a>
                      <a href="#" onclick="confirmarAccion('pago_acciones.php?accion=borrar&id_pago=<?php echo $pago['id']; ?>&id_cliente=<?php echo $id_cliente; ?>', '¿Estás seguro de que deseas eliminar este pago? Esta acción no se puede deshacer.')" class="btn btn-sm btn-danger" title="Borrar Pago"><i class="bi bi-trash"></i></a>
                 </td>
             </tr>

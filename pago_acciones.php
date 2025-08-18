@@ -230,9 +230,9 @@ $monto_pagado = (isset($_POST['monto_pagado']) && is_numeric($_POST['monto_pagad
    case 'facturar':
         $id_pago = $_GET['id_pago'];
         
-        // 1. Obtener los datos necesarios para la factura desde la base de datos
+        // 1. >>> CONSULTA MODIFICADA: Obtener Razón Social <<<
         $stmt = $pdo->prepare("
-            SELECT p.monto_pagado, c.cuit 
+            SELECT p.monto_pagado, c.cuit, c.razon_social 
             FROM pagos p 
             JOIN clientes c ON p.id_cliente = c.id 
             WHERE p.id = ?
@@ -249,24 +249,25 @@ $monto_pagado = (isset($_POST['monto_pagado']) && is_numeric($_POST['monto_pagad
             $tipoComp = "11"; // Factura C
             $cuit_cliente = $datos_factura['cuit'];
             $importe_pago = $datos_factura['monto_pagado'];
+            $razon_social_cliente = $datos_factura['razon_social']; // <<< NUEVA VARIABLE
 
-            // 4. Construir la URL de destino con los parámetros GET
-            // urlencode() asegura que los datos se pasen correctamente en la URL
+            // 4. >>> URL MODIFICADA: Añadir receptor_razon_social <<<
+            // urlencode() asegura que los datos (especialmente nombres con espacios) se pasen correctamente
             $url_destino = sprintf(
-                "afipSE/emitirComp.php?tipoComp=%s&cuit=%s&importe=%s",
+                "afipSE/emitirComp.php?tipoComp=%s&cuit=%s&importe=%s&receptor_razon_social=%s",
                 urlencode($tipoComp),
                 urlencode($cuit_cliente),
-                urlencode($importe_pago)
+                urlencode($importe_pago),
+                urlencode($razon_social_cliente) // <<< NUEVO PARÁMETRO
             );
 
             // 5. Redirigir al usuario al script de facturación
             header("Location: " . $url_destino);
-            exit(); // Terminar la ejecución del script aquí
+            exit();
 
         } else {
             // Si no se encuentra el pago, redirigir con un error
             set_notification('Error: No se pudo encontrar el pago para facturar.', 'danger');
-            // Intentamos redirigir al cliente si tenemos el ID, sino al index
             if (isset($_GET['id_cliente'])) {
                 redirect_to_client($_GET['id_cliente']);
             } else {
